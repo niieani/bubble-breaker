@@ -1,0 +1,245 @@
+<html>
+<head>
+<script language="javascript">
+</script>
+</head>
+<body>
+<script language="javascript">
+var colours=5;
+// var coloursList as new Array; // tablica odpowiadaj¹ca kolorom, moze nie bedzie potrzebna?
+var fieldLines=7;
+var fieldCols=7;
+var fieldPxDiff=100;
+
+//generowanie pola gry
+for (i=fieldLines; i>0; i--){
+	for (j=fieldCols; j>0; j--){
+		
+		//generowanie DIVów
+		var fieldNameTemp=j+'_'+i;
+		var fieldColour=Math.ceil(Math.random()*colours);
+		document.write('<div id="'+fieldNameTemp+'" onclick="mouseClick(' + j + ', ' + i + ');" style="position: absolute;" >' + fieldColour + ' (' + j + 'x' + i + ')</div>');
+		document.getElementById(fieldNameTemp).style.top=i*fieldPxDiff;
+		document.getElementById(fieldNameTemp).style.left=j*fieldPxDiff;
+		document.getElementById(fieldNameTemp).name=fieldColour
+		//ustawianie 
+	}
+}
+
+function pick(x,y){
+	//document.getElementById(x+'_'+y).innerHTML="<b>S</b>";
+	//existance(x,y).style.visibility="hidden";
+	if (isMarked(x,y)!=true){
+	
+	existance(x,y).isMarked=true;
+	existance(x,y).innerHTML=existance(x,y).innerHTML+"!";
+	//gravity();
+	
+	}
+	
+	//unpick(x,y);
+	//existance(x,y).isMarked=false;
+}
+
+function unpick(x,y){
+	//existance(x,y).isMarked=false;
+}
+
+function destroyElement(divId) {
+  var d = document.getElementById(divId).parentNode;
+  var olddiv = document.getElementById(divId);
+  d.removeChild(olddiv);
+}
+
+function destroyMarked(){
+	for(i=fieldLines; i>0; i--){
+		for (j=fieldCols; j>0; j--){
+			if(isMarked(j,i)){
+				destroyElement(format(j,i));
+			}
+		}
+	}
+}
+
+function fall(x,y){
+	//existance(x,y).style.left = parseInt(existance(x,y).style.left)+fieldPxDiff*x //(fieldPxDiff*x) //existance(x,y).style.left-
+	existance(x,y).style.top = parseInt(existance(x,y).style.top)+fieldPxDiff //(fieldPxDiff*y) //existance(x,y).style.top-
+	existance(x,y).id=format(x,y+1);
+	existance(x,y).innerHTML=getColour(x,y)+" "+"("+existance(x,y).id+")";
+	//if(existance(x,y-1)) fall(x,y-1);
+/*document.getElementById('1_1').id='11_11';
+document.getElementById('11_11').style.left=300;
+document.getElementById('1_2').style.left=400;*/
+}
+
+function gravity(){
+//
+	//if (existance(x,y-1)){
+	////document.write("yo");
+	//	fall(x,y-1);
+	//}
+
+
+	//for (i=fieldLines; i>0; i--){
+	//	for (j=fieldCols; j>0; j--){
+	for(i=1; i<fieldLines; i++){
+		for (j=1; j<fieldCols; j++){
+			//if(isMarked(j,i)){
+				if (!existance(j,i+1)){
+					fall(j,i);
+				}
+			//}
+		}
+	}
+
+}
+
+function format(x,y){
+	return (x+'_'+y);
+}
+
+function getColour(x,y){
+	var colour=document.getElementById(format(x,y)).name;
+	if (colour) return colour;
+	else return false;
+}
+
+function existance(x,y){
+	var exist=(document.getElementById(format(x,y)));
+	if (exist) return exist;
+	else return false;
+}
+
+function isMarked(x,y){
+	if(document.getElementById(format(x,y)).isMarked==true){
+		return document.getElementById(format(x,y)).isMarked;
+	}
+	else return false;
+}
+
+function wasChecked(x,y){
+	existance(x,y).isChecked=true;
+}
+
+function isChecked(x,y){
+	if(existance(x,y).isChecked==true){
+		return existance(x,y).isChecked;
+	}
+	else return false;
+}
+
+function mouseClick(x,y){
+	autoClean();
+	select(x,y);
+}
+
+function autoclean(){
+	
+	
+}
+
+function select(x,y,alwaysSelect){
+
+	if(isChecked(x,y)!=true){
+		wasChecked(x,y);
+		
+		if (!alwaysSelect){
+			alwaysSelect=false;
+		}
+		//x-1, x+1, y-1, y+1
+		
+		var thisColour=getColour(x,y);
+
+		if (existance(x-1,y)){
+			if (getColour(x-1,y)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x-1,y,true);
+			}
+			else{
+				wasChecked(x-1,y);
+			}
+		}
+		
+
+		
+		if (existance(x+1,y)){
+			if (getColour(x+1,y)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x+1,y,true);
+			}
+			else{
+				wasChecked(x+1,y);
+			}
+		}
+
+		if (existance(x,y-1)){
+			if (getColour(x,y-1)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x,y-1,true);
+			}
+			else{
+				wasChecked(x,y-1);
+			}
+		}
+		
+		if (existance(x,y+1)){
+			if (getColour(x,y+1)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x,y+1,true);
+			}
+			else{
+				wasChecked(x,y+1);
+			}
+		}
+
+	} //end isChecked()
+
+	/*if (alwaysSelect==true){
+		pick(x,y);
+	}*/
+	
+	//destroyElement(format(x,y));
+	//destroyMarked();
+}
+
+/*document.getElementById('1_1').style.left=500
+document.getElementById('1_1').id='11_11';
+document.getElementById('11_11').style.left=300;
+document.getElementById('1_2').style.left=400;*/
+
+/*
+addElement JavaScript Function
+function addElement() {
+  var ni = document.getElementById('myDiv');
+  var numi = document.getElementById('theValue');
+  var num = (document.getElementById('theValue').value -1)+ 2;
+  numi.value = num;
+  var newdiv = document.createElement('div');
+  var divIdName = 'my'+num+'Div';
+  newdiv.setAttribute('id',divIdName);
+  newdiv.innerHTML = 'Element Number '+num+' has been added! <a href=\'#\' onclick=\'removeElement('+divIdName+')\'>Remove the div "'+divIdName+'"</a>';
+  ni.appendChild(newdiv);
+}
+
+removeElement JavaScript Function
+function removeElement(divNum) {
+  var d = document.getElementById('myDiv');
+  var olddiv = document.getElementById(divNum);
+  d.removeChild(olddiv);
+}
+
+
+*/
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<html>
+<head>
+<script language="javascript">
+</script>
+</head>
+<body>
+<script language="javascript">
+var colours=5;
+// var coloursList as new Array; // tablica odpowiadaj¹ca kolorom, moze nie bedzie potrzebna?
+var fieldLines=7;
+var fieldCols=7;
+var fieldPxDiff=60;
+var fieldUID=0;
+
+//generowanie pola gry
+for (y=fieldLines; y>0; y--){
+	for (x=fieldCols; x>0; x--){
+		fieldUID++;
+		//generowanie DIVów
+		var fieldNameTemp=x+'x'+y;
+		var fieldColour=Math.ceil(Math.random()*colours);
+		//document.write('<div id="'+fieldNameTemp+'" onClick="mouseClick(' + x + ', ' + y + ');" style="position: absolute;" >' + fieldColour + ' (' + x + 'x' + y + ')</div>');
+		document.write('<div id="'+fieldNameTemp+'" onClick="mouseClick(' + fieldUID + ');" style="position: absolute;" >' + fieldColour + ' (' + x + 'x' + y + ')</div>');
+		document.getElementById(fieldNameTemp).style.top=y*fieldPxDiff;
+		document.getElementById(fieldNameTemp).style.left=x*fieldPxDiff;
+		document.getElementById(fieldNameTemp).name=fieldColour;
+		document.getElementById(fieldNameTemp).UID=fieldUID;
+		document.getElementById(fieldNameTemp).xvalue=x;
+		document.getElementById(fieldNameTemp).yvalue=y;
+		//ustawianie 
+	}
+}
+
+function pick(x,y){
+	//document.getElementById(x+'_'+y).innerHTML="<b>S</b>";
+
+	if (isMarked(x,y)!=true){
+	
+	existance(x,y).isMarked=true;
+	//existance(x,y).style.visibility="hidden";
+	//existance(x,y).innerHTML=existance(x,y).innerHTML+"!";
+	//gravity();
+	
+	}
+	
+	//unpick(x,y);
+	//existance(x,y).isMarked=false;
+}
+
+function unpick(x,y){
+	//existance(x,y).isMarked=false;
+}
+
+function destroyElement(divId) {
+  var d = document.getElementById(divId).parentNode;
+  var olddiv = document.getElementById(divId);
+  d.removeChild(olddiv);
+}
+
+function destroyMarked(){
+	for(y=fieldLines; y>0; y--){
+		for (x=fieldCols; x>0; x--){
+			if(isMarked(x,y)){
+				destroyElement(format(x,y));
+			}
+		}
+	}
+}
+
+function fall(x,y){
+
+		//existance(x,y).style.left = parseInt(existance(x,y).style.left)+fieldPxDiff*x //(fieldPxDiff*x) //existance(x,y).style.left-
+		existance(x,y).style.top = parseInt(existance(x,y).style.top)+fieldPxDiff //(fieldPxDiff*y) //existance(x,y).style.top-
+		existance(x,y).id=format(x,y+1);
+		//y=y+1;
+		existance(x,y+1).innerHTML=getColour(x,y+1)+" "+"("+existance(x,y+1).id+")";
+		//existance(x,y+1).onClick='mouseClick(' + x + ', ' + (y+1) + ');';
+		existance(x,y+1).onClick='document.write("' + x + ' and ' + (y+1) + '");';
+	
+	//if(existance(x,y-1)) fall(x,y-1);
+/*document.getElementById('1_1').id='11_11';
+document.getElementById('11_11').style.left=300;
+document.getElementById('1_2').style.left=400;*/
+}
+
+function gravity(){
+//
+	//if (existance(x,y-1)){
+	////document.write("yo");
+	//	fall(x,y-1);
+	//}
+
+
+	//for (i=fieldLines; i>0; i--){
+	//	for (x=fieldCols; x>0; x--){
+	for(y=1; y<fieldLines; y++){
+		for (x=1; x<fieldCols; x++){
+			//if(isMarked(x,i)){
+				if (existance(x,y)){
+					if (!existance(x,y+1)){
+					//if (isMarked(x,y+1)){
+						fall(x,y);
+						gravity();
+					}
+				}
+			//}
+		}
+	}
+
+}
+
+function format(x,y){
+	return (x+'x'+y);
+}
+
+function getColour(x,y){
+	var colour=existance(x,y).name;
+	if (colour) return colour;
+	else return false;
+}
+
+function existance(x,y){
+	var exist=(document.getElementById(format(x,y)));
+	if (exist) return exist;
+	else return false;
+}
+
+function isMarked(x,y){
+	if(existance(x,y).isMarked==true){
+		return document.getElementById(format(x,y)).isMarked;
+	}
+	else return false;
+}
+
+function wasChecked(x,y){
+	existance(x,y).isChecked=true;
+}
+
+function isChecked(x,y){
+	if(existance(x,y).isChecked==true){
+		return existance(x,y).isChecked;
+	}
+	else return false;
+}
+
+function mouseClick(UID){
+	
+	autoClean();
+	select(x,y);
+	destroyMarked();
+	gravity();
+}
+
+function getXbyUID(UID){
+	var xExist=document.getElementByUID(UID).xvalue;
+	if (xExist) return xExist;
+	else return false;
+}
+
+function getYbyUID(UID){
+	var yExist=document.getElementByUID(UID).yvalue;
+	if (yExist) return yExist;
+	else return false;
+}
+
+function autoClean(){
+	for(y=1; y<=fieldLines; y++){
+		for (x=1; x<=fieldCols; x++){
+			existance(x,y).isChecked=false;
+			//existance(x,y).innerHTML="<b>lol</b>";
+		}
+	}
+}
+
+function select(x,y,alwaysSelect){
+
+	if(isChecked(x,y)!=true){
+		wasChecked(x,y);
+		
+		if (!alwaysSelect){
+			alwaysSelect=false;
+		}
+		//x-1, x+1, y-1, y+1
+		
+		var thisColour=getColour(x,y);
+
+		if (existance(x-1,y)){
+			if (getColour(x-1,y)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x-1,y,true);
+			}
+			else{
+				wasChecked(x-1,y);
+			}
+		}
+		
+
+		
+		if (existance(x+1,y)){
+			if (getColour(x+1,y)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x+1,y,true);
+			}
+			else{
+				wasChecked(x+1,y);
+			}
+		}
+
+		if (existance(x,y-1)){
+			if (getColour(x,y-1)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x,y-1,true);
+			}
+			else{
+				wasChecked(x,y-1);
+			}
+		}
+		
+		if (existance(x,y+1)){
+			if (getColour(x,y+1)==thisColour){
+	//			if (isMarked(x,y)!=true){
+					pick(x,y);
+	//			}
+				select(x,y+1,true);
+			}
+			else{
+				wasChecked(x,y+1);
+			}
+		}
+
+	} //end isChecked()
+
+	/*if (alwaysSelect==true){
+		pick(x,y);
+	}*/
+	
+	//destroyElement(format(x,y));
+	//destroyMarked();
+}
+
+/*document.getElementById('1_1').style.left=500
+document.getElementById('1_1').id='11_11';
+document.getElementById('11_11').style.left=300;
+document.getElementById('1_2').style.left=400;*/
+
+/*
+addElement JavaScript Function
+function addElement() {
+  var ni = document.getElementById('myDiv');
+  var numi = document.getElementById('theValue');
+  var num = (document.getElementById('theValue').value -1)+ 2;
+  numi.value = num;
+  var newdiv = document.createElement('div');
+  var divIdName = 'my'+num+'Div';
+  newdiv.setAttribute('id',divIdName);
+  newdiv.innerHTML = 'Element Number '+num+' has been added! <a href=\'#\' onclick=\'removeElement('+divIdName+')\'>Remove the div "'+divIdName+'"</a>';
+  ni.appendChild(newdiv);
+}
+
+removeElement JavaScript Function
+function removeElement(divNum) {
+  var d = document.getElementById('myDiv');
+  var olddiv = document.getElementById(divNum);
+  d.removeChild(olddiv);
+}
+
+
+*/
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1191 @@
+<html>
+<head>
+<script type="text/javascript">
+/*
+	[BubbleBreakerJS] v0.90 alpha
+
+	This game is licenced under Creative Commons v2 
+	Attribution-Noncommercial-No Derivative Works 2.0 Generic
+	http://creativecommons.org/licenses/by-nc-nd/2.0/
+
+	Created by Bazyli Brzóska [ http://www.improwizuj.pl/blog/]
+	alternative name: JawBreaker
+	
+*/
+
+//var event;
+/*
+function show_x(event)
+{
+return event.clientX;
+//alert("X coords: " + x + ", Y coords: " + y);
+}
+function show_y(event)
+{
+return event.clientY;
+//alert("X coords: " + x + ", Y coords: " + y);
+}
+
+var IE = document.all?true:false;
+if (!IE) document.captureEvents(Event.MOUSEMOVE)
+//document.onmousemove = getMouseXY;
+var tempX = 0;
+var tempY = 0;
+function getMouseXY(e) {
+if (IE) { // grab the x-y pos.s if browser is IE
+tempX = event.clientX + document.body.scrollLeft;
+tempY = event.clientY + document.body.scrollTop;
+}
+else {  // grab the x-y pos.s if browser is NS
+tempX = e.pageX;
+tempY = e.pageY;
+}  
+if (tempX < 0){tempX = 0;}
+if (tempY < 0){tempY = 0;}  
+//document.Show.MouseX.value = tempX;
+//document.Show.MouseY.value = tempY;
+return true;
+}
+*/
+
+var mouseY;
+var mouseX;
+
+function test(event){
+	mouseY=event.clientY;
+	mouseX=event.clientX;
+	//window.setTimeout('test(event);',10);
+}
+
+</script>
+<style>
+      #popupcontent{
+      position: absolute;
+      visibility: hidden;
+      overflow: hidden;
+      border:1px solid #CCC;
+      background-color:#F9F9F9;
+      border:1px solid #333;
+      padding:5px;
+      }
+	  body {
+		background-color:black;
+		color:white;
+		font-family:Verdana,Tahoma,sans-serif,Helvetica;
+	  }
+	  a{
+		text-decoration: none
+	  }
+	  a:active{
+		color: rgb(255,255,255) 
+	  }
+	  :link{
+		color: rgb(255,0,0) 
+	  }
+</style>
+</head>
+<body onmouseover="test(event);" onload="preload();">
+<script language="javascript">
+var colours=3;
+// var coloursList as new Array; // tablica odpowiadaj¹ca kolorom, moze nie bedzie potrzebna?
+var fieldCols=13;
+var fieldLines=7;
+var fieldPxDiff=40;
+var score=0;
+var scoreMultiplier=5;
+//var gamePossible=false;
+var gamePossible;
+var selectedItems=0;
+var possibleScoreNum;
+var rollSpeed=2; //musi dzieliæ fieldPxDiff i musi byc parzyste 
+var refreshRate=15; //wiecej = wolniej
+var gravityState=false; //init. state is the opposite
+var snapState=false; //init. state is the opposite
+var newState=false;
+var oneClickGame=true;
+var defaultBorder=""; //"2px dotted #fff";
+var imgPrefix="img_";
+var deadSufix="_dead"; //??? depracaced
+var ghostPrefix="ghost_";
+var switchPlaces=false;
+var difference=30; //fieldPxDiff/5*3 //popup difference
+var switches=new Array();
+var ghosts=1;
+var gameStarted=false;
+var fallRightFirst=false;
+var simpleSnapState=false; //dopracowac
+var animateNewGame=false;
+
+createBalls(fieldCols,fieldLines);
+
+function changeSize(form){
+	var newCols=parseInt(form.menuCols.value);
+	var newLines=parseInt(form.menuLines.value);
+	redrawBoard(newCols,newLines);
+}
+
+function demo(){
+	destroyObjectAni(fieldCols,fieldLines);
+	//select
+	
+	if(gameStarted==true) redrawBoard(fieldCols,fieldLines);
+	else window.setTimeout('demo();', refreshRate*30);
+}
+
+function demo2(){
+	randCol=Math.ceil(Math.random()*fieldCols);
+	randLine=Math.ceil(Math.random()*fieldLines);
+	while(!existance(randCol,randLine)){
+		randCol=Math.ceil(Math.random()*fieldCols);
+		randLine=Math.ceil(Math.random()*fieldLines);
+	}
+	select(randCol,randLine);
+	mouseClickAndDestroy();
+	populateFirstCol();
+	//destroyObjectAni(Math.ceil(Math.random()*fieldCols),Math.ceil(Math.random()*fieldLines));
+	
+	if(gameStarted==true) redrawBoard(fieldCols,fieldLines);
+	else window.setTimeout('demo2();', refreshRate*60);
+}
+
+function demo3(){
+	randCol=Math.ceil(Math.random()*fieldCols);
+	randLine=Math.ceil(Math.random()*fieldLines);
+	while(!existance(randCol,randLine)){
+		randCol=Math.ceil(Math.random()*fieldCols);
+		randLine=Math.ceil(Math.random()*fieldLines);
+	}
+	//select(randCol,randLine);
+	//mouseClickAndDestroy();
+	destroyObjectAni(randCol,randLine);
+	populateFirstCol();
+	if(gameStarted==true) redrawBoard(fieldCols,fieldLines);
+	else window.setTimeout('demo3();', refreshRate*10);
+}
+
+function startGame(){
+	setColours(3); //5
+	gameStarted=true;
+	destroyElement("startMenu");
+}
+
+function redrawBoard(newCols,newLines,newColours){
+	if( !((newCols<=3) || (newLines<=3) || (newCols>13) || (newLines>13) || !(newCols) || !(newLines) ) ){
+		destroyAll();
+		if (newColours) colours=newColours;
+		
+		if (animateNewGame==true) populateFirstCol(newLines);
+		else createBalls(newCols,newLines);
+		
+		fieldCols=newCols;
+		fieldLines=newLines;
+		setScore(0);
+	}
+	else{
+		window.alert("Please set the correct size for the board! (more then 3, less then 13)");
+	}
+
+}
+
+function setColours(newColours){
+	newColours=newColours+2;
+	redrawBoard(fieldCols,fieldLines,newColours);
+}
+
+function destroyAll(){
+	for(y=fieldLines; y>0; y--){
+		for (x=fieldCols; x>0; x--){
+				if(existance(x,y)) destroyElement(format(x,y));
+		}
+	}
+}
+
+
+
+//var clickState=false;
+
+//generowanie pola gry
+/*for (y=fieldLines; y>0; y--){
+	for (x=fieldCols; x>0; x--){
+		//generowanie DIVów
+		var fieldNameTemp=x+'x'+y;
+		var fieldColour=Math.ceil(Math.random()*colours);
+		document.write('<div id="'+fieldNameTemp+'" onclick="mouseClick(' + x + ', ' + y + ');" style="position: absolute;" >' + fieldColour + ' (' + x + 'x' + y + ')</div>');
+		document.getElementById(fieldNameTemp).style.top=y*fieldPxDiff;
+		document.getElementById(fieldNameTemp).style.left=x*fieldPxDiff;
+		document.getElementById(fieldNameTemp).name=fieldColour;
+	}
+}*/
+
+function createDiv(id, colour, left, top, x, y){ 
+	//width, height
+   var newdiv = document.createElement('div');
+   newdiv.setAttribute('id', id);
+   
+  /*if (width) {
+       newdiv.style.width = 300;
+   }
+   
+   if (height) {
+       newdiv.style.height = 300;
+   }*/
+   
+   if ((left || top) || (left && top)) {
+       newdiv.style.position = "absolute";
+       
+       if (left) {
+           newdiv.style.left = left;
+       }
+       
+       if (top) {
+           newdiv.style.top = top;
+       }
+   }
+   
+   if(switches['retro']==false){
+	var background;
+	switch(colour){
+		case 1:
+		background="#ff0000";
+		break;
+		case 2:
+		background="#00ff00";
+		break;
+		case 3:
+		background="#0000ff";
+		break;
+		case 4:
+		background="#ffff00";
+		break;
+		case 5:
+		background="#00ffff";
+		break;
+		case 6:
+		background="#ff00ff";
+		break;
+		case 7:
+		background="#aaff00";
+		break;
+   }
+   //var background="#"+4222*colour^2;
+   newdiv.style.background = background;
+   }
+   
+   newdiv.style.width = (fieldPxDiff/5)*4;
+   newdiv.style.height = (fieldPxDiff/5)*4;
+   //newdiv.style.font.colour = "white";
+   newdiv.style.border = defaultBorder;
+   //newdiv.style = "margin-left: auto;";
+   //newdiv.style = "margin-right: auto;";
+   //newdiv.style.text-align = "center";
+   //newdiv.style.marginLeft=0;
+   removeBorder();
+   newdiv.style.cursor = "crosshair"
+   //newdiv.style.border.style = "hidden";
+   
+	if (colour){
+		if(switches['retro']!=false)	newdiv.innerHTML = '<img id="'+ "img_" + id +'" src="img/'+colour+'.png" style="float:center; margin-left:-7px; margin-top:-7px;">';
+       //newdiv.innerHTML = "<font color='white'><center>"+colour+"</font></center>"; //+ ' (' + x + 'x' + y + ')'; //background; 
+	}
+
+   /*if (name) {
+       newdiv.name = colour;
+   } else {
+       newdiv.name = "unknown";
+   }*/
+   
+newdiv.onclick=function(){
+	mouseClick(x,y);
+}
+
+if (oneClickGame==true){
+	newdiv.onmouseover=function(){
+		mouseClick(x,y,true);
+	}
+}
+
+document.body.appendChild(newdiv);
+
+}
+
+/*
+function showPopup(w,h){
+var baseText = "Game Over. Total score: "+score;
+ var popUp = document.getElementById("popupcontent");
+ 
+ popUp.style.top = "200px";
+ popUp.style.left = "200px";
+ popUp.style.width = w + "px";
+ popUp.style.height = h + "px";
+ 
+ if (baseText == null) baseText = popUp.innerHTML;
+ popUp.innerHTML = baseText +
+ "<div id=\"statusbar\"><button onclick=\"hidePopup();\">Close window<button></div>";
+ 
+ var sbar = document.getElementById("statusbar");
+ sbar.style.marginTop = (parseInt(h)-40) + "px";
+ popUp.style.visibility = "visible";
+}
+
+function hidePopup(){
+      var popUp = document.getElementById("popupcontent");
+      popUp.style.visibility = "hidden";
+}*/
+
+function setOpacity(id, o) {
+  var obj = document.getElementById(id).style;
+  obj.MozOpacity = (o / 100); // Mozilla i FireFox
+  obj.KhtmlOpacity = (o / 100); // Safari < 1.2
+  obj.opacity = (o / 100); // Safari 1.2, nowszy FireFox i Mozilla
+  obj.filter = "alpha(opacity=" + o + ")"; // Internet Explorer
+}
+
+function getOpacity(id){
+	var obj = document.getElementById(id).style;
+	return obj.MozOpacity*100;
+}
+
+/*function setOpacity(objectId,objectOpacity) {
+  if (document.all){
+     document.all(objectId).filters.alpha.opacity = objectOpacity;
+  } else if (!document.all && document.getElementById) {      
+     document.getElementById(objectId).style.MozOpacity = objectOpacity;
+  }
+}*/
+
+function showPopup(){
+	var baseText = "Game Over. Total score: "+score;
+	window.alert(baseText);
+}
+
+function createBalls(cols,lines){
+	for (y=1; y<=lines; y++){
+		for (x=1; x<=cols; x++){
+			//generowanie DIVów
+			var fieldNameTemp=format(x,y);
+			var fieldColour=Math.ceil(Math.random()*colours);
+			createDiv(fieldNameTemp, fieldColour, x*fieldPxDiff, y*fieldPxDiff, x, y);
+			//document.write('<div id="'+fieldNameTemp+'" onclick="mouseClick(' + x + ', ' + y + ');" style="position: absolute;" >' + fieldColour + ' (' + x + 'x' + y + ')</div>');
+			/*document.getElementById(fieldNameTemp).style.top=y*fieldPxDiff;
+			document.getElementById(fieldNameTemp).style.left=x*fieldPxDiff;*/
+			existance(x,y).name=fieldColour;
+			//if(debug==true) existance(x,y).style.border = "1px solid #000";
+		}
+	}
+	//setScore(0);
+}
+
+function populateFirstCol(howMany){
+	if(newState==true){
+		for(y=1; y<=fieldLines; y++){
+			if(existance(1,y)) var firstCol=true;
+		}
+		if (!firstCol){
+			if(!howMany){
+				var howMany=Math.ceil(Math.random()*fieldLines);
+			}
+			else{
+				var wasDefined=true;
+			}
+			createBalls(1,howMany);
+			//if(!wasDefined){
+			//	var snapStateBack=snapState;
+			//	snapState=true;
+			//}
+			//gravity();
+			//gravityRight();
+			doGravity();
+			//if(!wasDefined) snapState=snapStateBack;
+			if(!wasDefined) populateFirstCol();
+			else {
+				//var rollSpeedBack=rollSpeed;
+				//var refreshRateBack=refreshRate;
+				//rollSpeed=2;
+				//refreshRate=50;
+
+				window.setTimeout('populateFirstCol('+howMany+');', refreshRate*30);
+
+				//populateFirstCol(howMany);
+				//rollSpeed=rollSpeedBack;
+				//refreshRate=refreshRateBack;
+			}
+		}
+		delete firstCol;
+	}
+}
+
+function pick(x,y){
+	//document.getElementById(x+'_'+y).innerHTML="<b>S</b>";
+
+	if (isMarked(x,y)!=true){
+		existance(x,y).isMarked=true;
+		addBorder(x,y);
+		selectedItems++;
+	//existance(x,y).style.visibility="hidden";
+	//existance(x,y).innerHTML=existance(x,y).innerHTML+"!";
+	//gravity();
+	
+	}
+	
+	//unpick(x,y);
+	//existance(x,y).isMarked=false;
+}
+
+/*function unpick(x,y){
+	//existance(x,y).isMarked=false;
+}*/
+
+/*function ghost(x,y){
+	var exist=(document.getElementById(format(x,y)+"_dead"));
+	if (exist) return exist;
+	else return false;
+}*/
+
+function ghost(ghostID){
+	ghostID=ghostPrefix+ghostID;
+	var exist=(document.getElementById(ghostID));
+	if (exist) return exist;
+	else return false;
+}
+
+/*function imgExistance(x,y){
+	var exist=(document.getElementById("img_"+format(x,y)+"_dead"));
+	//window.alert(exist);
+	if (exist) return exist;
+	else return false;
+}*/
+
+function imgGhostExistance(ghostID){
+	ghostID=imgPrefix+ghostID;
+	var exist=(document.getElementById(ghostID));
+	//window.alert(exist);
+	if (exist) return exist;
+	else return false;
+}
+
+function destroyObjectAni(x,y,ghostID){
+	if(ghostID){
+		if(ghost(ghostID)){
+		//if(ghost(x,y)){
+			/*var xCoords=x*fieldPxDiff;
+			var yCoords=y*fieldPxDiff;
+			//if (!xDistance) var xDistance=(Math.ceil((xCoords-xNow)/fieldPxDiff))*2;
+			//if (!yDistance) var yDistance=(Math.ceil((yCoords-yNow)/fieldPxDiff))*2;
+			//var xDistance=3;
+			//var yDistance=3;
+			*/
+			//x2 i y2 - koordynaty docelowe
+			//if (!((xCoords==xNow) && (yCoords==yNow))) {
+	//			if (xNow<xCoords) existance(x,y).style.left=xNow+(rollSpeed*xDistance);
+	//			if (yNow<yCoords) existance(x,y).style.top=yNow+(rollSpeed*yDistance);
+
+			var xNow=parseInt(ghost(ghostID).style.left);
+			var yNow=parseInt(ghost(ghostID).style.top);
+
+			var widthNow=parseInt(ghost(ghostID).style.width);
+			var heightNow=parseInt(ghost(ghostID).style.height);
+			var imgWidth=parseInt(imgGhostExistance(ghostID).width);
+			var imgHeight=parseInt(imgGhostExistance(ghostID).height);
+			//window.alert(imgExistance(x,y));
+			//var imgWidth=parseInt(
+			if(switches['fade']==true){
+				if (getOpacity(ghost(ghostID).id)>1){
+					setOpacity(ghost(ghostID).id,getOpacity(ghost(ghostID).id)-8);
+				}
+			}
+			
+				if (widthNow>1) {
+					ghost(ghostID).style.width=widthNow-(rollSpeed);
+					if(switches['shrink']==true) imgGhostExistance(ghostID).width=imgWidth-(rollSpeed);
+					if(switches['move']==true) ghost(ghostID).style.left=xNow+(rollSpeed/2);
+
+				}
+				if (heightNow>1) {
+					ghost(ghostID).style.height=heightNow-(rollSpeed);
+					if(switches['shrink']==true) imgGhostExistance(ghostID).height=imgHeight-(rollSpeed);
+					if(switches['move']==true) ghost(ghostID).style.top=yNow+(rollSpeed/2);
+				}
+				if ((widthNow<=1) || (heightNow<=1)){
+					destroyElement(ghostPrefix+ghostID);
+				}else{
+					window.setTimeout('destroyObjectAni('+x+','+y+','+ghostID+');', refreshRate*3);
+				}
+			
+	//			window.setTimeout('moveObjectAni('+x+','+y+','+xDistance+','+yDistance+');', refreshRate);
+	//}
+		}
+	}
+	else if(existance(x,y)){
+			//existance(x,y).id=existance(x,y).id+"_dead";
+			//window.alert(existance(x,y).id);
+			//window.alert(ghost(x,y).id);
+		var ghostID=updateID(x,y,x,y,true);
+			//destroyObjectNoAni(x,y);
+			//gravity();
+			//gravityRight();
+		ghost(ghostID).style.zIndex=(-1);
+		removeGhostOnClick(ghostID);
+		destroyObjectAni(x,y,ghostID);
+	}
+}
+
+function destroyObjectNoAni(x,y){
+	if(existance(x,y)) destroyElement(format(x,y));
+	//existance(x,y).id="kupa"+x+y;
+}
+
+function destroyElement(divId){
+	//if (document.getElementById(divId)){
+		var d = document.getElementById(divId).parentNode;
+		var olddiv = document.getElementById(divId);
+		d.removeChild(olddiv);
+		
+		//gravity();
+		//gravityRight();
+		doGravity();
+	//}
+}
+
+function destroyMarked(){
+	for(y=fieldLines; y>0; y--){
+		for (x=fieldCols; x>0; x--){
+			if(existance(x,y)){
+				if(isMarked(x,y)){
+					if(switches['destani']==false) 
+					destroyObjectNoAni(x,y);
+					else 
+					destroyObjectAni(x,y);
+					//destroyElement(format(x,y));
+					//destroyMarked();
+				}
+			}
+		}
+	}
+}
+
+//function moveObjectAni(x,y,xDistance,yDistance){
+function moveObjectAni(x,y){
+	if(existance(x,y)){
+			var xCoords=x*fieldPxDiff;
+			var yCoords=y*fieldPxDiff;
+		if(switches['ani']==true){
+			var xNow=parseInt(existance(x,y).style.left);
+			var yNow=parseInt(existance(x,y).style.top);
+			
+//			if (!xDistance) 
+			var xDistance=(Math.ceil((xCoords-xNow)/fieldPxDiff))*rollSpeed;
+//			if (!yDistance) 
+			var yDistance=(Math.ceil((yCoords-yNow)/fieldPxDiff))*rollSpeed;
+			//var xDistance=3;
+			//var yDistance=3;
+
+			//x2 i y2 - koordynaty docelowe
+			if (!((xCoords==xNow) && (yCoords==yNow))) {
+				if (xNow<xCoords) existance(x,y).style.left=xNow+(xDistance);
+				if (yNow<yCoords) existance(x,y).style.top=yNow+(yDistance);
+//				if (xNow<xCoords) existance(x,y).style.left=xNow+(rollSpeed);
+//				if (yNow<yCoords) existance(x,y).style.top=yNow+(rollSpeed);
+
+//				window.setTimeout('moveObjectAni('+x+','+y+','+xDistance+','+yDistance+');', refreshRate);
+				window.setTimeout('moveObjectAni('+x+','+y+');', refreshRate);
+			}
+		}
+		else{
+			existance(x,y).style.left=xCoords;
+			existance(x,y).style.top=yCoords;
+		}
+	}
+}
+
+function updateID(x,y,newX,newY,die){
+	if(die!=true){
+		existance(x,y).id=format(newX,newY);
+		if(document.getElementById("img_"+format(x,y))){
+			document.getElementById("img_"+format(x,y)).id="img_"+format(newX,newY);
+		}
+	}
+	else{
+		var ghostName=ghostPrefix+ghosts
+		existance(x,y).id=ghostName;
+		if(document.getElementById("img_"+format(x,y))){
+			document.getElementById("img_"+format(x,y)).id=imgPrefix+ghosts;
+		}
+		ghosts++;
+		return (ghosts-1);
+		/*existance(x,y).id=format(newX,newY)+"_dead";
+		if(document.getElementById("img_"+format(x,y))){
+			document.getElementById("img_"+format(x,y)).id="img_"+format(newX,newY)+"_dead";
+		}*/
+	}
+}
+
+function removeGhostOnClick(ghostID){
+	ghost(ghostID).onclick=function(){
+		 window.alert("this is a ghost nr:"+ghostID);
+		}
+}
+
+function updateOnClickEvents(x,y){
+	existance(x,y).onclick=function(){
+			mouseClick(x,y);
+		}
+	if (oneClickGame==true){
+		existance(x,y).onmouseover=function(){
+			mouseClick(x,y,true);
+		}
+	}
+	/*else{
+		existance(x,y).onmouseover=function(){
+		//clean
+			
+		}
+	}*/
+}
+/*
+function updateAllOnClickEvents(){
+	for(y=1; y<fieldLines; y++){
+		for (x=1; x<=fieldCols; x++){
+				if (existance(x,y)){
+					updateOnClickEvents(x,y);
+				}
+		}
+	}
+}*/
+
+function doGravity(){
+	if(fallRightFirst==false){
+		if(simpleSnapState==true){
+			gravity();
+			simpleGravityRight();
+		}
+		else{
+			gravity();
+			gravityRight();
+		}
+	}
+	else{
+		if(simpleSnapState==true){
+			simpleGravityRight();
+			gravity();
+		}
+		else{
+			gravityRight();
+			gravity();
+		}
+	}
+}
+
+function fall(x,y){
+		var newY=y;
+		while(!existance(x,newY+1)){
+			newY++;
+			if(newY==fieldLines) break;
+		}
+		//existance(x,y).id=format(x,newY);
+		updateID(x,y,x,newY);
+		updateOnClickEvents(x,newY);
+
+		//existance(x,newY).innerHTML="<b>"+getColour(x,newY)+" "+"("+existance(x,newY).id+")</b>";
+		moveObjectAni(x,newY); //,0,parseInt(existance(x,newY).style.top)+(fieldPxDiff*(x,newY))
+		/*existance(x,newY).onclick=function(){
+			mouseClick(x,newY);
+		}*/
+		
+}
+
+function fallRight(x,y){
+		var newX=x;
+		while(!existance(newX+1,y)){
+			newX++;
+			if(newX==fieldCols) break;
+		}
+		//existance(x,y).id=format(newX,y);
+		updateID(x,y,newX,y);
+		updateOnClickEvents(newX,y);
+
+		//existance(newX,y).innerHTML="<b>"+getColour(newX,y)+" "+"("+existance(newX,y).id+")</b>";
+		moveObjectAni(newX,y);
+		/*existance(newX,y).onclick=function(){
+			mouseClick(newX,y);
+		}*/
+}
+
+function columnFallRight(x){
+	for(y=1; y<=fieldLines; y++){
+		var newX=x+1;
+		//while(!existance(newX+1,y)){
+		//	newX++;
+		//	if(newX==fieldCols) break;
+		//}
+		//existance(x,y).id=format(newX,y);
+		if(existance(x,y)){
+			updateID(x,y,newX,y);
+			updateOnClickEvents(newX,y);
+			moveObjectAni(newX,y);
+		}
+	}
+}
+
+
+function simpleGravityRight(){
+	if(snapState==true){
+		for (x=(fieldCols-1); x>=1; x--){
+			//for(y=1; y<=fieldLines; y++){
+			y=fieldLines;
+					//if (existance(x,y)){
+						//w prawo
+						if (!existance(x+1,y)){
+							columnFallRight(x);
+							simpleGravityRight();
+						}
+					//}
+			//}
+		}
+	}
+}
+
+function gravity(){
+	if(gravityState==true){
+		for(y=1; y<fieldLines; y++){
+			for (x=1; x<=fieldCols; x++){
+				if (existance(x,y)){
+					//w dol
+					if (!existance(x,y+1)){
+						fall(x,y);
+						gravity();
+					}
+				}
+			}
+		}
+	}
+}
+
+function gravityRight(){
+	if(snapState==true){
+		for (x=1; x<fieldCols; x++){
+			for(y=1; y<=fieldLines; y++){
+					if (existance(x,y)){
+						//w prawo
+						if (!existance(x+1,y)){
+							fallRight(x,y);
+							gravityRight();
+						}
+					}
+			}
+		}
+	}
+}
+
+function format(x,y){
+	return (x+'x'+y);
+}
+
+function getColour(x,y){
+	var colour=existance(x,y).name;
+	if (colour) return colour;
+	else return false;
+}
+
+function existance(x,y){
+	var exist=(document.getElementById(format(x,y)));
+	if (exist) return exist;
+	else return false;
+}
+
+function isMarked(x,y){
+	if(existance(x,y).isMarked==true){
+		return existance(x,y).isMarked;
+	}
+	else return false;
+}
+
+function wasChecked(x,y){
+	existance(x,y).isChecked=true;
+}
+
+function isChecked(x,y){
+	if(existance(x,y).isChecked==true){
+		return existance(x,y).isChecked;
+	}
+	else return false;
+}
+
+function removeBorder(x,y){
+	if(existance(x,y)){
+		if(switches['border']==true) setOpacity(format(x,y),100);
+		else existance(x,y).style.border = ""; //defaultBorder;
+	}
+}
+
+function addBorder(x,y){
+	if(existance(x,y)){
+		if(switches['border']==true) setOpacity(format(x,y),70);
+		else existance(x,y).style.border = "2px inset #fff";
+	}
+}
+
+function mouseClickAndDestroy(){
+	score=score+possibleScoreNum;
+	//window.alert(possibleScoreNum);
+	setScore(score);
+	destroyMarked();
+
+	//gravity();
+	//gravityRight();
+	doGravity();
+	//populateFirstCol();
+
+	isGameOver();
+}
+
+
+function setScore(scoreToSet){
+	var scoreDiv=document.getElementById('totalScore');
+	if(scoreDiv) scoreDiv.innerHTML = '<font style="font-size: x-large; font-variant: small-caps; font-family: helvetica, verdana;" >Total score: '+scoreToSet+'</font>';
+	score=scoreToSet;
+}
+
+function isGameOver(){
+	populateFirstCol();
+	gamePossible=false;
+	for(yY=1; yY<=fieldLines; yY++){
+		for (xX=1; xX<=fieldCols; xX++){
+			//window.prompt(yY+" "+xX);
+			if(existance(xX,yY)){
+				select(xX,yY,false);
+				autoClean();
+			}
+			if(gamePossible==true) break;
+		}
+		if(gamePossible==true) break;
+	}
+	if (gamePossible==false){
+		showPopup(200,60);
+	}
+}
+
+/*function getPositionX(e){
+	var posx=0;
+	var posy=0;
+	if (!e) var e=window.event;
+	if (e.pageX || e.pageY){
+		posx=e.pageX;
+		posy=e.pageY;
+	}
+	else if (e.clientX || e.clientY){
+		posx = e.clientX + document.body.scrollLeft
+					+document.documentElement.scrollLeft;
+		posy = e.clientY + document.body.scrollTop
+					+document.documentElement.scrollTop;
+	}
+	return posx;
+	//posx i posy
+}
+
+function getPositionY(e){
+	if (!document.all){
+		window.captureEvents(Event.CLICK);
+	}
+	var posx=0;
+	var posy=0;
+	if (!e) var e=window.event;
+	if (e.pageX || e.pageY){
+		posx=e.pageX;
+		posy=e.pageY;
+	}
+	else if (e.clientX || e.clientY){
+		posx = e.clientX + document.body.scrollLeft
+					+document.documentElement.scrollLeft;
+		posy = e.clientY + document.body.scrollTop
+					+document.documentElement.scrollTop;
+	}
+	return posy;
+	//posx i posy
+}*/
+
+function mouseClick(x,y,mouseOver){
+	if(!mouseOver){
+		//autoClean();
+		//select(x,y);
+		if(existance(x,y)){
+			if(existance(x,y).isMarked==true){
+				mouseClickAndDestroy();
+				autoClean();
+			}
+		}
+	}
+	autoClean();
+	select(x,y);
+	
+	setOpacity('possibleScore',70);
+	var possibleScore = document.getElementById('possibleScore');
+	
+	if(switchPlaces==true) difference=-difference;
+	
+	if(existance(x,y)){
+	possibleScore.style.top = parseInt(existance(x,y).style.top) + difference;
+	possibleScore.style.left = parseInt(existance(x,y).style.left) + difference;
+	}
+	//possibleScore.style.top = mouseY + 20;
+	//possibleScore.style.left = mouseX + 20;
+	possibleScoreNum = scoreMultiplier * selectedItems * selectedItems;
+	possibleScore.innerHTML = '<font style="color: black; font-family: tahoma, helvetica; font-size: large;">'+possibleScoreNum+'</font>';
+	if (possibleScoreNum==0) possibleScore.style.visibility="hidden";
+	else possibleScore.style.visibility="visible";
+	possibleScore.style.border = "1px dashed #ccc";
+	possibleScore.style.padding="3";
+	//possibleScore.style.z-index="1";
+	possibleScore.style.background = "#fff";
+}
+
+function autoClean(){
+	for(y=1; y<=fieldLines; y++){
+		for (x=1; x<=fieldCols; x++){
+			existance(x,y).isChecked=false;
+			existance(x,y).isMarked=false;
+			removeBorder(x,y);
+			selectedItems=0;
+			//existance(x,y).innerHTML="<b>lol</b>";
+		}
+	}
+}
+
+function select(x,y,alwaysSelect){
+	
+	if(isChecked(x,y)!=true){
+		wasChecked(x,y);
+		
+		if (!alwaysSelect){
+			alwaysSelect=false;
+		}
+		//x-1, x+1, y-1, y+1
+		
+		var thisColour=getColour(x,y);
+
+		if (existance(x-1,y)){
+			if (getColour(x-1,y)==thisColour){
+					pick(x,y);
+					gamePossible=true;
+				select(x-1,y,true);
+			}
+			else{
+				wasChecked(x-1,y);
+			}
+		}
+		
+
+		
+		if (existance(x+1,y)){
+			if (getColour(x+1,y)==thisColour){
+				pick(x,y);
+				gamePossible=true;
+				select(x+1,y,true);
+			}
+			else{
+				wasChecked(x+1,y);
+			}
+		}
+
+		if (existance(x,y-1)){
+			if (getColour(x,y-1)==thisColour){
+				pick(x,y);
+				gamePossible=true;
+				select(x,y-1,true);
+			}
+			else{
+				wasChecked(x,y-1);
+			}
+		}
+		
+		if (existance(x,y+1)){
+			if (getColour(x,y+1)==thisColour){
+				pick(x,y);
+				gamePossible=true;
+				select(x,y+1,true);
+			}
+			else{
+				wasChecked(x,y+1);
+			}
+		}
+
+	} //end isChecked()
+
+	/*if (alwaysSelect==true){
+		pick(x,y);
+	}*/
+	
+	//destroyElement(format(x,y));
+	//destroyMarked();
+}
+
+/*document.getElementById('1_1').style.left=500
+document.getElementById('1_1').id='11_11';
+document.getElementById('11_11').style.left=300;
+document.getElementById('1_2').style.left=400;*/
+
+/*
+addElement JavaScript Function
+function addElement() {
+  var ni = document.getElementById('myDiv');
+  var numi = document.getElementById('theValue');
+  var num = (document.getElementById('theValue').value -1)+ 2;
+  numi.value = num;
+  var newdiv = document.createElement('div');
+  var divIdName = 'my'+num+'Div';
+  newdiv.setAttribute('id',divIdName);
+  newdiv.innerHTML = 'Element Number '+num+' has been added! <a href=\'#\' onclick=\'removeElement('+divIdName+')\'>Remove the div "'+divIdName+'"</a>';
+  ni.appendChild(newdiv);
+}
+
+removeElement JavaScript Function
+function removeElement(divNum) {
+  var d = document.getElementById('myDiv');
+  var olddiv = document.getElementById(divNum);
+  d.removeChild(olddiv);
+}
+
+
+*/
+
+function preload(){
+	gravitySwitchState();
+	snapSwitchState();
+	newSwitchState();
+	SwitchState("fade","menuFade","Turn off","Turn on");
+	SwitchState("shrink","menuShrink","Turn off","Turn on");
+	SwitchState("ani","menuAni","Turn off","Turn on");
+	SwitchState("move","menuMove","Turn off","Turn on");
+	SwitchState("destani","menuDestAni","Turn off","Turn on");
+	SwitchState("retro","menuRetro","Turn off","Turn on");
+	SwitchState("border","menuHighlight","Opacity","Border");
+
+	setOpacity("startMenu", 90);
+	
+	demo3();
+	//oneClickGameSwitchState();
+}
+
+
+
+function gravitySwitchState(){
+	var gravityDiv = document.getElementById('menuGravity');
+	if(gravityState==true) {
+		gravityDiv.innerHTML='<a href="javascript:gravitySwitchState();">Turn on</a>';
+		gravityState=false;
+	}
+	else {
+		gravityDiv.innerHTML='<a href="javascript:gravitySwitchState();">Turn off</a>';
+		gravityState=true;
+		gravity();
+	}
+}
+
+function snapSwitchState(){
+	var snapDiv = document.getElementById('menuSnap');
+	if(snapState==true) {
+		snapDiv.innerHTML='<a href="javascript:snapSwitchState();">Turn on</a>';
+		snapState=false;
+	}
+	else {
+		snapDiv.innerHTML='<a href="javascript:snapSwitchState();">Turn off</a>';
+		snapState=true;
+		//gravityRight();
+		//dodac kod
+	}
+}
+
+function newSwitchState(){
+	var newDiv = document.getElementById('menuNew');
+	if(newState==true) {
+		newDiv.innerHTML='<a href="javascript:newSwitchState();">Turn on</a>';
+		newState=false;
+	}
+	else {
+		newDiv.innerHTML='<a href="javascript:newSwitchState();">Turn off</a>';
+		newState=true;
+		populateFirstCol();
+	}
+}
+
+function SwitchState(varname,divID,text,textSw){
+	//if(!text1) text1="Turn on";
+	//if(!text2) text2="Turn off";
+	var thisDiv = document.getElementById(divID);
+	if(switches[varname]==true) {
+		thisDiv.innerHTML='<a href="javascript:SwitchState(\''+varname+'\',\''+divID+'\',\''+textSw+'\',\''+text+'\');">'+text+'</a>';
+		//window.alert('<a href="javascript:SwitchState("'+varname+'",this.id);">'+text1+'</a>');
+		switches[varname]=false;
+		//window.alert(switches[varname]);
+	}
+	else {
+		thisDiv.innerHTML='<a href="javascript:SwitchState(\''+varname+'\',\''+divID+'\',\''+textSw+'\',\''+text+'\');">'+text+'</a>';
+		//window.alert('<a href="javascript:SwitchState('+varname+',this.id);">'+text2+'</a>');
+		switches[varname]=true;
+		//window.alert(switches[varname]);
+	}
+}
+
+function hide(id){
+	document.getElementById(id).style.visibility="hidden";
+	//document.getElementById(id).style.left=parseInt(document.getElementById(id).style.left)-30;
+	if (switchPlaces==false) switchPlaces=true;
+	else (switchPlaces=false);
+}
+
+//oneClickGame
+
+/*function oneClickGameSwitchState(){
+	var oneClickGameDiv = document.getElementById('menuOneClickGame');
+	if(oneClickGame==true) {
+		oneClickGameDiv.innerHTML='<a href="javascript:oneClickGameSwitchState();">Turn on</a>';
+		oneClickGame=false;
+	}
+	else {
+		oneClickGameDiv.innerHTML='<a href="javascript:oneClickGameSwitchState();">Turn off</a>';
+		oneClickGame=true;
+		//updateAllOnClickEvents();
+	}
+}*/
+
+</script>
+<!--<div id="popupcontent">Game over!</div>-->
+<div id="startMenu" style="z-index: 2; position: absolute; left: 20%; top: 20%; width: 60%; background: #FFF; text-align: center;" ><p style="font-size: xx-large;"><a href="javascript:startGame();"><b>Start Bubble Breaker</b></a></font></div>
+<div id="possibleScore" style="z-index: 1; position: absolute;" onmouseover="hide(this.id);"></div>
+<div id="totalScore" style="position: absolute; left: 50px; bottom: 50px;"></div>
+<div id="menu" style="position: absolute; right: 80px; top: 50px;">
+MENU
+<p><a href="javascript:redrawBoard(fieldCols,fieldLines);">Restart Game</a></p>
+<p>Gamestyle:
+<li>Gravity <div id="menuGravity">ON/OFF</div></li>
+<li>Snapping <div id="menuSnap">ON/OFF</div></li>
+<li>Create new <div id="menuNew">ON/OFF</div></li>
+</p>
+<p>Browser compatibility:
+<li>Modern style: <div id="menuRetro">ON/OFF</div></li>
+<li>Animate moves: <div id="menuAni">ON/OFF</div></li>
+<li>Highlighting method: <div id="menuHighlight">Opacity / Border</div></li>
+<li>Destroy animations: <div id="menuDestAni">ON/OFF</div></li>
+<li>[Destroy fade-out]: <div id="menuFade">ON/OFF</div></li>
+<li>[Destroy shrink] (modern style only):<div id="menuShrink">ON/OFF</div></li>
+<li>[Destroy center]: <div id="menuMove">ON/OFF</div></li>
+</p>
+<p>Board size:
+<form name="boardSizeForm">
+<li>Cols: <input id="menuCols" value="13" onChange="changeSize(this.form)" onFocus="this.style.background ='yellow'" onBlur="this.style.background='white'"></li>
+<li>Rows: <input id="menuLines" value="7" onChange="changeSize(this.form)" onFocus="this.style.background ='yellow'" onBlur="this.style.background='white'"></li>
+</form>
+<li>Colours: 
+<form name="ColoursForm">
+<select name="ColoursSelect" onChange="setColours(this.selectedIndex)">
+<option>2
+<option>3
+<option>4
+<option>5
+<option>6
+<option selected>7
+</select>
+</form>
+</li>
+</div><!-- menu div -->
+</body>
+</html>

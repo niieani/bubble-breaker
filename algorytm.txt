@@ -1,0 +1,19 @@
+﻿algorytm:
+
+1. losowanie kulek (okolo po tyle samo kazdego koloru) [można zrobić wybór ilości kolorów]
+2. generowanie divów z kulkami rozmieszczonych co tą samą odległość, każdy div ma swoje koordynaty XY
+3. po kliknięciu na DIV o ID x,y zostają sprawdzone wszystkie sąsiadujące kulki czy nie sa tym samym kolorem
+4. jeżeli isnieją sąsiadujące kulki tego samego koloru, są one po kolei sprawdzane w ten sam sposób (itd).
+5. raz sprawdzona kulka przyjmuje wartość TRUE zeby nie sprawdzać jej kolejny raz
+6. jeśli nie isnieją (pkt 4) nie zaznacz nic
+7. zaznaczone kulki zmieniają obrazki na inne (lub ramka wokól, ale to trudniejsze)
+8. drugie klikniecie na dowolną z zaznaczonych kulek - usuwa kulki
+9. kulki z góry spadają, zajmując miejsce tych, tak jakby nie było dziur w poziomie
+10. to samo dzieje się z lewej do prawej, ale całymi kolumnami (sprawdzanie czy w kolumnie jest najniższa kulka odbywa się po opadnięciu kulek)
+alg: jeżeli DIV po prawej stronie kulki jest pusty, przesuń kulke w prawo, jeszcze raz wykonaj funkcje; jeżeli po prawej stronie kulki jest inna kulka lub ściana: break;
+11. jeżeli kolumna jest pusta, losowa ilość losowych kulek przylatuje z lewej strony i jest przyciągnięta maksymalnie do prawej strony
+12. gra kończy się, jeżeli wokół żadnych z kul nie ma drugiej o takim samym kolorze (sprawdzanie za każdym razem przy wykonwywaniu każdej z funkcji)
+
+algorytm spadania:
+1. PO zniszczeniu sprawdz czy istnieje ID  - dupa...
+1. zapisz ktore ID niszczysz i dopiero kiedy NIE MA juz zadnych alternatyw (jak to sprawdzic?)
