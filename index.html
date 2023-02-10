@@ -8,7 +8,7 @@
 	Attribution-Noncommercial-No Derivative Works 2.0 Generic
 	http://creativecommons.org/licenses/by-nc-nd/2.0/
 
-	Created by Bazyli Brzóska [ http://www.improwizuj.pl/blog/]
+	Created by Bazyli BrzÃ³ska [ http://www.improwizuj.pl/blog/]
 	alternative name: JawBreaker
 	
 */
@@ -87,7 +87,7 @@ function test(event){
 <body onmouseover="test(event);" onload="preload();">
 <script language="javascript">
 var colours=3;
-// var coloursList as new Array; // tablica odpowiadaj¹ca kolorom, moze nie bedzie potrzebna?
+// var coloursList as new Array; // tablica odpowiadajÂ¹ca kolorom, moze nie bedzie potrzebna?
 var fieldCols=13;
 var fieldLines=7;
 var fieldPxDiff=40;
@@ -97,7 +97,7 @@ var scoreMultiplier=5;
 var gamePossible;
 var selectedItems=0;
 var possibleScoreNum;
-var rollSpeed=2; //musi dzieliæ fieldPxDiff i musi byc parzyste 
+var rollSpeed=2; //musi dzieliÃ¦ fieldPxDiff i musi byc parzyste 
 var refreshRate=15; //wiecej = wolniej
 var gravityState=false; //init. state is the opposite
 var snapState=false; //init. state is the opposite
@@ -207,7 +207,7 @@ function destroyAll(){
 //generowanie pola gry
 /*for (y=fieldLines; y>0; y--){
 	for (x=fieldCols; x>0; x--){
-		//generowanie DIVów
+		//generowanie DIVÃ³w
 		var fieldNameTemp=x+'x'+y;
 		var fieldColour=Math.ceil(Math.random()*colours);
 		document.write('<div id="'+fieldNameTemp+'" onclick="mouseClick(' + x + ', ' + y + ');" style="position: absolute;" >' + fieldColour + ' (' + x + 'x' + y + ')</div>');
@@ -361,7 +361,7 @@ function showPopup(){
 function createBalls(cols,lines){
 	for (y=1; y<=lines; y++){
 		for (x=1; x<=cols; x++){
-			//generowanie DIVów
+			//generowanie DIVÃ³w
 			var fieldNameTemp=format(x,y);
 			var fieldColour=Math.ceil(Math.random()*colours);
 			createDiv(fieldNameTemp, fieldColour, x*fieldPxDiff, y*fieldPxDiff, x, y);
